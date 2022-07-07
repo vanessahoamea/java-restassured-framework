@@ -7,7 +7,7 @@ import org.junit.runner.RunWith;
 @RunWith(CucumberWithSerenity.class)
 @CucumberOptions(
         features = {"src/test/resources/features"},
-        tags = "@regression",
+        tags = "@Test",
         glue = {"com/apitesting/stepDefinitions"},
         snippets = CucumberOptions.SnippetType.CAMELCASE)
 

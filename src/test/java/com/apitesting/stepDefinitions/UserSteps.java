@@ -53,7 +53,10 @@ public class UserSteps {
   public void tryToCreateGoRestUser(DataTable invalidUserTable) {
     Map<String, String> invalidUserDetails = invalidUserTable.asMaps().get(0);
 
-    buildUserObject(invalidUserDetails);
+    if(invalidUserDetails.get("email").equals("@random"))
+      buildUserObject(invalidUserDetails);
+    else
+      buildUserObject(invalidUserDetails, true);
 
     response =
         new GenericRetryClient<>()
@@ -76,14 +79,50 @@ public class UserSteps {
     setUserRequestAndResponseForLaterUse();
   }
 
+  @When("I try to update the GoRest user with invalid data")
+  public void tryToUpdateGoRestUser(DataTable invalidUpdateUserTable) {
+    Map<String, String> invalidUserDetails = invalidUpdateUserTable.asMaps().get(0);
+    int userIdToBeUpdated = userResponse.getId();
+
+    if(invalidUserDetails.get("email").equals("@random"))
+      buildUserObject(invalidUserDetails);
+    else
+      buildUserObject(invalidUserDetails, true);
+
+    response =
+            new GenericRetryClient<>()
+                    .waitForStatusCode(
+                            () -> new UserRequest().updateUser(userIdToBeUpdated, userRequestObject),
+                            HttpStatus.UNPROCESSABLE_ENTITY_422);
+
+    world.setResponse(response);
+    ErrorList errorList = new ErrorList(Arrays.asList(response.as(Error[].class)));
+    world.setErrorList(errorList);
+  }
+
+  @When("I try to update an invalid GoRest user with the following details")
+  public void updateGoRestInvalidUser(DataTable updateUserTable) {
+    Map<String, String> userDetails = updateUserTable.asMaps().get(0);
+    int invalidUserId = Integer.parseInt(userDetails.get("id"));
+
+    buildUserObject(userDetails);
+    response = new UserRequest().updateUser(invalidUserId, userRequestObject);
+
+    world.setResponse(response);
+  }
+
   private void buildUserObject(Map<String, String> user) {
+    buildUserObject(user, false);
+  }
+
+  private void buildUserObject(Map<String, String> user, boolean userEmail) {
     userRequestObject =
-        UserRequestModel.builder()
-            .name(user.get("name"))
-            .gender(user.get("gender"))
-            .email(generateRandomEmail())
-            .status(user.get("status"))
-            .build();
+            UserRequestModel.builder()
+                    .name(user.get("name"))
+                    .gender(user.get("gender"))
+                    .email(userEmail ? user.get("email") : generateRandomEmail())
+                    .status(user.get("status"))
+                    .build();
   }
 
   private void setUserRequestAndResponseForLaterUse() {
@@ -117,6 +156,16 @@ public class UserSteps {
   @When("I delete my GoRest user")
   public void deleteGoRestUser() {
     world.setResponse(new UserRequest().deleteUser(userResponse.getId()));
+  }
+
+  @When("I try to delete an invalid GoRest user with the following ID")
+  public void deleteGoRestInvalidUser(DataTable updateUserTable) {
+    Map<String, String> userDetails = updateUserTable.asMaps().get(0);
+    int invalidUserId = Integer.parseInt(userDetails.get("id"));
+
+    response = new UserRequest().deleteUser(invalidUserId);
+
+    world.setResponse(response);
   }
 
   @Then("the user response is successfully validated")

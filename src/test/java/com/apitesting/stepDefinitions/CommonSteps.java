@@ -3,6 +3,7 @@ package com.apitesting.stepDefinitions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.apitesting.models.common.ErrorList;
+import com.apitesting.models.common.ErrorMessage;
 import com.apitesting.models.common.ErrorType;
 import com.apitesting.persistence.World;
 import com.apitesting.utils.JsonSchemaUtils;
@@ -36,6 +37,13 @@ public class CommonSteps {
     assertThat(errorList)
         .usingRecursiveComparison()
         .isEqualTo(ErrorList.getExpectedError(errorType));
+  }
+
+  @Then("^I receive (.*) error message$")
+  public void verifyErrorMessage(String errorMessage) {
+    ErrorMessage errorMsg = world.getResponse().as(ErrorMessage.class);
+
+    assertThat(errorMsg.getMessage()).isEqualTo(errorMessage);
   }
 
   @Then("the error response JSON schema matches the one expected")
